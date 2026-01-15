@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "sistemasolarforce",
+  "private_key_id": "d601aa343c2b1dc730c38de7958b30275c8ddaf1",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCshzYoBHUsAKu8\n/+PhOhC+pCWbXO1LeUKWrE8cqL6VFri40Ktsgkg6ba4kiULmGQ1bdVsabfqxL1/1\nzAxGBrBeiiV+Uxb98PgTqthoGSUpXO2cpB7YDea3mZmKsrxPZHQhbrvws95M3IEH\nET7y+3hn2Zguy2Lg8/a5FlvuNVyF5OhWrUe5LdT9dlj6gn45ohqnHafms1f2Ly43\nqf3DFcUrckNwLZIybXdfr1sLyT19UknB9cPR6YXl+KYLil9TIhDfxNFhOqpyfy6x\n4DoReH3XusHENF5ZSxM9caa6i6ztOohvOYqlsIX4dC5JCH4QJWfZQ90nXvicM2mt\njbhUxbKBAgMBAAECggEAQDRtVgUaqc5yGvrLjjSyqI+joya49D5jJnlnU44Epqz2\n/2hAczgkswHALb6bE9A85U1OIw7MnYW421sdMi4pEnWssE8xnj0/xOnucQbyimsX\nzhRRmivKMYdK2Y/cflsu0IZKELCPSOFCbyPe3kPxMgyLEtcDrB1+MrD8czCOhxDj\n4jJliiRWuUNmCs3C1c3lfk+rdkxpezHnw+DC98++uV5rN3g2iP1nmCrrL7Kr3mWA\npO/GY5RreCw65Ao22P5OyNq69JxeaIkqzsBCYS19v5DQaAVCDcHPKmLdZ9n8Lfp1\nUIPy1U87fFaxKyeXWvqPVjZI5qUmKpPAJ1M/9m9LVQKBgQDx3jY9NdE0IvRJIGSp\nDs5Z+6cO1ulhM3HdVW5CbptDCIruBykBrkbnwONzr4FIU5ZPUtjchPrWe/rdSI9S\noTkWTuq3wY0dwvCViGeRLQeb3d0vc5HhnTJP/Uhm9BKhNpy+wJjZALnLntdkWAA9\nU3QCG8VYUrM4TGG2GTiT82IOJwKBgQC2m9Xb6dHdlIbAK7KalzeaYFEd/XlKM6g9\nRJnwlVmjWJ+YGzvm9qsgSbzZFtZmc5AiQNb7kMtihUvF1zzlQd5RDjpIJrvC/D/J\nZPm5SImKNBLKDaY71aLgfe7T3QaaCUfGsN8HeMsuEX/YNTsSXi7b9F/DSS6STvA1\nDasVsEdLFwKBgA3djER0ClsvyctLZRnf9GpqJ8iM/3IIDfX/SMPcLWBpY/WDSZGE\nGSJ+B0wBeqrXx90iRbZWlT6oetgmqbi171zdB02jdeCH5VzdJfrHlxETZfOrb2h8\np364aWclhM/jHpc82UZPaVdH8tcYyGK7nwHj76tBim6myk8zIPAyWqOvAoGASwcm\nTE/6sW7oGqcZoBjHeL9gNNFDd3BYDKxWD5pdlRbBo+50o0XwM7j4Rb3zY27R5rD7\nY6svVZBs/KGd3Jg+rtEIs0Ju3QNlderuC+m40TbqDWikR2tUm6ZCbXwfzURI4GMl\nj91apdf8zim41qgp2qfCfOthni2e1j2CcMvXzwsCgYAfGgR9NIrDduMX9I7+hJFV\n52RAGYAlI9drPFDs4h8le3fzQrvD3NioWXfbRkM/DErnizwWNPn+jiB2JbBib1jl\ntRDLqjZGINhE+EL09FDsSh69iNJPBq68BbISXIIeKUsEAeNaaLF+7cb3CKX044fT\nGNR3mYL47oXc9bGs0Szj5g==\n-----END PRIVATE KEY-----\n",
+  "client_email": "robo-solar@sistemasolarforce.iam.gserviceaccount.com",
+  "client_id": "109838765347718933814",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/robo-solar%40sistemasolarforce.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
