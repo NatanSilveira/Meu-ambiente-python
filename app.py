@@ -20,8 +20,8 @@ st.set_page_config(page_title="Solar Force", page_icon="🔴", layout="centered"
 IMGBB_API_KEY = "775d60bb1bcd4c621f61f0213e10ad7c" 
 
 # 2. Configurações de E-mail
-EMAIL_REMETENTE = "natan.10.dez@gmail.com" 
-SENHA_EMAIL = "boyk xzgz vand oaxf" 
+EMAIL_REMETENTE = "solarforcerelatorio@gmail.com" 
+SENHA_EMAIL = "sxlo vfel wtpu gyiw" 
 EMAIL_DESTINATARIO = "natan.10.dez@hotmail.com" 
 
 # Senha Admin
@@ -70,7 +70,6 @@ def get_google_sheet(nome_da_aba):
     if nome_da_aba == "Principal":
         return planilha.sheet1
     else:
-        # Certifique-se que criou a aba 'Controle_GDM' no Google Sheets
         return planilha.worksheet(nome_da_aba)
 
 def upload_imagem(arquivo):
