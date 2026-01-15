@@ -60,7 +60,8 @@ def get_google_sheet(nome_da_aba):
     """Conecta em uma aba específica da planilha"""
     scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets',
              "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("credenciais.json", scope)
+    # Lê as senhas direto do cofre do site (Secrets)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gcp_service_account"], scope)
     client = gspread.authorize(creds)
     
     # Abre a planilha principal e seleciona a aba pelo nome
@@ -208,7 +209,7 @@ if menu == "Área do Promotor (Visitas)":
                 except Exception as e:
                     st.error(f"Erro: {e}")
 
-# --- OPÇÃO 2: CONTROLE DE GDM (CORRIGIDO!) ---
+# --- OPÇÃO 2: CONTROLE DE GDM ---
 elif menu == "Controle de GDM ❄️":
     st.markdown("<h1 style='text-align: center;'>Controle de GDM</h1>", unsafe_allow_html=True)
     st.warning("Use esta área apenas para reportar divergências em Geladeiras.")
@@ -217,7 +218,7 @@ elif menu == "Controle de GDM ❄️":
         # Identificação Básica
         col1, col2 = st.columns(2)
         with col1:
-            nome = st.text_input("Nome Promotor") # Variável correta: nome
+            nome = st.text_input("Nome Promotor") 
         with col2:
             cod_loja = st.text_input("Código Loja")
             
