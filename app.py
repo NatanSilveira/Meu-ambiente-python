@@ -14,18 +14,36 @@ import io
 # ==========================================
 # CONFIGURAÇÕES E CHAVES (PREENCHA AQUI!)
 # ==========================================
+# configuração bizarra que gtp me passou! kk
 st.set_page_config(page_title="Solar Force", page_icon="🔴", layout="centered")
 
+# --- jeitinho com css para esconder ícones chatos
+hide_menu_style = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    [data-testid="stToolbar"] {visibility: hidden;}
+    </style>
+    """
+st.markdown(hide_menu_style, unsafe_allow_html=True)
+# -------------------------------------------------------
+
 # 1. Chave do site ImgBB
-IMGBB_API_KEY = "775d60bb1bcd4c621f61f0213e10ad7c" 
+IMGBB_API_KEY = "775d60bb1bcd4c621f61f0213e10ad7c"
 
 # 2. Configurações de E-mail
-EMAIL_REMETENTE = "solarforcerelatorio@gmail.com" 
-SENHA_EMAIL = "sxlo vfel wtpu gyiw" 
-EMAIL_DESTINATARIO = "natan.10.dez@hotmail.com" 
-
-# Senha Admin
-SENHA_ADMIN = "solar2024"
+try:
+    # Pega o email
+    EMAIL_REMETENTE = st.secrets["email"]["usuario"]
+    SENHA_EMAIL = st.secrets["email"]["senha"]
+    
+    # Pega o email do boss
+    EMAIL_DESTINATARIO = st.secrets["admin"]["Destinatario"]
+    SENHA_ADMIN = st.secrets["admin"]["admin"]
+except Exception as e:
+    st.error(f"Erro de Segurança: As chaves não foram encontradas no Secrets! Detalhe: {e}")
+    st.stop()
 
 # ==========================================
 # DESIGN E ESTILO
@@ -90,7 +108,7 @@ def salvar_no_google(dados, nome_aba):
 def enviar_relatorio_email(tipo_relatorio):
     """Gera Excel e envia email baseado no tipo (Geral ou GDM)"""
     try:
-        # Define qual aba ler e qual assunto usar
+        # Define qual aba ler e qual assunto usar nessa porra
         if tipo_relatorio == "Geral":
             sheet = get_google_sheet("Principal")
             assunto = "Resumo Consolidado - VISITAS"
@@ -253,7 +271,6 @@ elif menu == "Controle de GDM ❄️":
                         
                     data_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
                     
-                    # CORREÇÃO APLICADA: Trocado 'nome_promotor' por 'nome'
                     salvar_no_google([data_hora, nome, cod_loja, gdm_nao_pesq, gdm_perdidas, gdm_paradas, obs_gdm, link_final_gdm], "Controle_GDM")
                     
                     st.success("✅ Ocorrência de GDM registrada!")
