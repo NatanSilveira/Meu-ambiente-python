@@ -12,17 +12,18 @@ from email import encoders
 import io
 
 # ==========================================
-# CONFIGURAÇÕES E CHAVES
+# CONFIGURAÇÕES INICIAIS
 # ==========================================
 st.set_page_config(page_title="Solar Force", page_icon="🔴", layout="centered")
 
-# CSS para esconder menu e ícones
+# --- CORREÇÃO DO MENU (PONTO 1) ---
+# Removemos a linha que escondia a 'stToolbar' para o menu voltar a aparecer no celular
 hide_menu_style = """
     <style>
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
+    #MainMenu {visibility: visible;}
     footer {visibility: hidden;}
-    [data-testid="stToolbar"] {visibility: hidden;}
+    /* Esconde apenas o botão de Deploy e opções de dev, mantendo a navegação */
+    .stDeployButton {display:none;}
     </style>
     """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
@@ -45,17 +46,12 @@ except Exception as e:
 # ==========================================
 st.markdown("""
     <style>
-    /* Botão Vermelho Coca-Cola */
     div.stButton > button:first-child {
         background-color: #F40009 !important;
         color: white !important;
         border-radius: 12px;
         width: 100%;
         font-weight: bold;
-    }
-    /* Esconde o olho da senha */
-    button[aria-label="Show password"] {
-        display: none !important;
     }
     .stTextInput label, .stMultiSelect label, .stTextArea label, .stFileUploader label {
         font-size: 16px;
@@ -65,24 +61,19 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# FUNÇÕES DE BACK-END (CÉREBRO)
+# FUNÇÕES DE BACK-END
 # ==========================================
 
 def get_google_sheet(nome_da_aba):
-    """Conecta na aba. Se não achar o nome, pega a primeira (segurança)."""
+    """Conecta na aba. Se não achar, pega a primeira."""
     scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets',
              "https://www.googleapis.com/auth/drive"]
-    
     creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gcp_service_account"], scope)
     client = gspread.authorize(creds)
-    
     planilha = client.open("Sistema Solar Force - Dados")
-    
     try:
-        # Tenta pegar a aba pelo nome exato (Ex: "Atividades_Semanais_Promotor")
         return planilha.worksheet(nome_da_aba)
     except:
-        # Se der erro (nome errado), pega a primeira aba disponível para não travar
         return planilha.sheet1
 
 def upload_imagem(arquivo):
@@ -96,26 +87,16 @@ def upload_imagem(arquivo):
         return f"[Erro: {e}]"
 
 def salvar_no_google(dados, nome_aba):
-    """
-    Salva dados calculando a posição exata (FORÇA BRUTA)
-    Isso impede que ele salve por cima de linhas existentes.
-    """
+    """Salva usando insert_row para evitar sobrescrever"""
     sheet = get_google_sheet(nome_aba)
-    
-    # 1. Pega tudo que tem na planilha
     valores_existentes = sheet.get_all_values()
-    
-    # 2. A próxima linha é o total atual + 1
     proxima_linha = len(valores_existentes) + 1
-    
-    # 3. Insere exatamente nessa linha 
     sheet.insert_row(dados, index=proxima_linha)
 
 def enviar_relatorio_email(tipo_relatorio):
-    """Gera Excel e envia email"""
+    """Gera Excel e envia email HTML formatado (PONTO 4)"""
     try:
         if tipo_relatorio == "Geral":
-            # Tenta pegar da aba certa, se falhar pega da primeira
             sheet = get_google_sheet("Atividades_Semanais_Promotor")
             assunto = "Resumo Consolidado - VISITAS"
             nome_arquivo = "Relatorio_Visitas"
@@ -140,16 +121,23 @@ def enviar_relatorio_email(tipo_relatorio):
         msg['To'] = EMAIL_DESTINATARIO
         msg['Subject'] = f"{assunto} - Solar Force ({datetime.now().strftime('%d/%m')})"
 
-        body = f"""
-        Olá,
-        
-        Segue em anexo o relatório solicitado: {assunto}.
-        Total de registros: {len(df)}
-        
-        Atenciosamente,
-        Sistema Solar Force
+        # --- CORPO DO EMAIL EM HTML COM LOGO ---
+        html_body = f"""
+        <html>
+          <body>
+            <p>Olá, <strong>Max</strong>,</p>
+            <p>Segue em anexo o relatório semanal de produtividade dos promotores da <strong>Base Mateus</strong>, referente ao período informado.</p>
+            <p>Total de registros processados: {len(df)}</p>
+            <br>
+            <p>Fico à disposição para qualquer dúvida ou ajuste que seja necessário.</p>
+            <p>Atenciosamente,<br>
+            <strong>Solar Force</strong></p>
+            <br>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Coca-Cola_logo.svg" width="150">
+          </body>
+        </html>
         """
-        msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
 
         part = MIMEBase('application', 'octet-stream')
         part.set_payload(buffer_excel.read())
@@ -184,7 +172,8 @@ if menu == "Área do Promotor (Visitas)":
     st.markdown("<h1 style='text-align: center;'>Relatório de Campo</h1>", unsafe_allow_html=True)
     st.info("Preencha os dados da visita diária.")
 
-    with st.form(key="form_visita"):
+    # PONTO 2: clear_on_submit=True LIMPA O FORM APÓS O ENVIO
+    with st.form(key="form_visita", clear_on_submit=True):
         col1, col2 = st.columns(2)
         with col1:
             nome = st.text_input("Nome", placeholder="Ex: João Silva") 
@@ -206,42 +195,39 @@ if menu == "Área do Promotor (Visitas)":
         st.markdown("<br>", unsafe_allow_html=True)
         submit = st.form_submit_button("REGISTRAR VISITA 💾")
 
-    if submit:
-        if not nome or not cod_loja or not missoes:
-            st.error("⚠️ Preencha Nome, Loja e Atividades!")
-        else:
-            with st.spinner('Enviando...'):
-                try:
-                    # Upload Múltiplo
-                    lista_links = []
-                    if arquivos_fotos:
-                        for arquivo in arquivos_fotos:
-                            lista_links.append(upload_imagem(arquivo))
-                        link_final = " | ".join(lista_links)
-                    else:
-                        link_final = "-"
-                    
-                    data_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
-                    missoes_txt = ", ".join(missoes)
-                    
-                    # --- AQUI ESTÁ A CORREÇÃO DA ABA E DO SALVAMENTO ---
-                    # 1. Monta a lista
-                    nova_linha = [data_hora, nome, matricula, cod_loja, cidade, missoes_txt, obs, link_final]
-                    
-                    # 2. Manda salvar na aba certa com a função nova
-                    salvar_no_google(nova_linha, "Atividades_Semanais_Promotor")
-                    
-                    st.success("✅ Visita registrada com sucesso!")
-                    
-                except Exception as e:
-                    st.error(f"Erro: {e}")
+        if submit:
+            if not nome or not cod_loja or not missoes:
+                st.error("⚠️ Preencha Nome, Loja e Atividades!")
+            else:
+                with st.spinner('Enviando...'):
+                    try:
+                        lista_links = []
+                        if arquivos_fotos:
+                            for arquivo in arquivos_fotos:
+                                lista_links.append(upload_imagem(arquivo))
+                            link_final = " | ".join(lista_links)
+                        else:
+                            link_final = "-"
+                        
+                        data_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
+                        missoes_txt = ", ".join(missoes)
+                        
+                        # Salva na aba certa
+                        nova_linha = [data_hora, nome, matricula, cod_loja, cidade, missoes_txt, obs, link_final]
+                        salvar_no_google(nova_linha, "Atividades_Semanais_Promotor")
+                        
+                        st.success("✅ Visita registrada com sucesso!")
+                        
+                    except Exception as e:
+                        st.error(f"Erro: {e}")
 
 # --- OPÇÃO 2: CONTROLE DE GDM ---
 elif menu == "Controle de GDM ❄️":
     st.markdown("<h1 style='text-align: center;'>Controle de GDM</h1>", unsafe_allow_html=True)
     st.warning("Use esta área apenas para reportar divergências em Geladeiras.")
 
-    with st.form(key="form_gdm"):
+    # PONTO 2: LIMPEZA AUTOMÁTICA AQUI TAMBÉM
+    with st.form(key="form_gdm", clear_on_submit=True):
         col1, col2 = st.columns(2)
         with col1:
             nome = st.text_input("Nome Promotor") 
@@ -249,7 +235,7 @@ elif menu == "Controle de GDM ❄️":
             cod_loja = st.text_input("Código Loja")
             
         st.markdown("### 🧊 Status das GDMs")
-        st.caption("Insira os códigos patrimoniais separados por vírgula ou espaço.")
+        st.caption("Insira os códigos patrimoniais.")
         
         gdm_nao_pesq = st.text_area("GDMs Não Pesquisadas", height=80)
         gdm_perdidas = st.text_area("GDMs Perdidas", height=80)
@@ -261,30 +247,30 @@ elif menu == "Controle de GDM ❄️":
         st.markdown("<br>", unsafe_allow_html=True)
         submit_gdm = st.form_submit_button("REGISTRAR GDM ❄️")
         
-    if submit_gdm:
-        if not nome or not cod_loja:
-            st.error("⚠️ Identifique o promotor e a loja!")
-        elif not (gdm_nao_pesq or gdm_perdidas or gdm_paradas):
-            st.error("⚠️ Preencha pelo menos um campo de GDM!")
-        else:
-            with st.spinner('Registrando GDM...'):
-                try:
-                    lista_links = []
-                    if fotos_gdm:
-                        for arquivo in fotos_gdm:
-                            lista_links.append(upload_imagem(arquivo))
-                        link_final_gdm = " | ".join(lista_links)
-                    else:
-                        link_final_gdm = "-"
+        if submit_gdm:
+            if not nome or not cod_loja:
+                st.error("⚠️ Identifique o promotor e a loja!")
+            elif not (gdm_nao_pesq or gdm_perdidas or gdm_paradas):
+                st.error("⚠️ Preencha pelo menos um campo de GDM!")
+            else:
+                with st.spinner('Registrando GDM...'):
+                    try:
+                        lista_links = []
+                        if fotos_gdm:
+                            for arquivo in fotos_gdm:
+                                lista_links.append(upload_imagem(arquivo))
+                            link_final_gdm = " | ".join(lista_links)
+                        else:
+                            link_final_gdm = "-"
+                            
+                        data_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
                         
-                    data_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
-                    
-                    # Salva na aba específica de GDM
-                    salvar_no_google([data_hora, nome, cod_loja, gdm_nao_pesq, gdm_perdidas, gdm_paradas, obs_gdm, link_final_gdm], "Controle_GDM")
-                    
-                    st.success("✅ Ocorrência de GDM registrada!")
-                except Exception as e:
-                    st.error(f"Erro ao salvar: {e}")
+                        # PONTO 3: SALVAMENTO CORRIGIDO (USANDO A FUNÇÃO CERTA)
+                        salvar_no_google([data_hora, nome, cod_loja, gdm_nao_pesq, gdm_perdidas, gdm_paradas, obs_gdm, link_final_gdm], "Controle_GDM")
+                        
+                        st.success("✅ Ocorrência de GDM registrada!")
+                    except Exception as e:
+                        st.error(f"Erro ao salvar: {e}")
 
 # --- OPÇÃO 3: ADMINISTRAÇÃO ---
 elif menu == "Painel Administrativo":
@@ -298,25 +284,21 @@ elif menu == "Painel Administrativo":
         
         col_A, col_B = st.columns(2)
         
-        # --- BOTÃO 1: RELATÓRIO GERAL DE VISITAS ---
         with col_A:
             st.info("📋 **Relatório de Visitas**")
-            st.caption("Puxa dados da aba Atividades_Semanais_Promotor.")
             if st.button("Enviar Relatório VISITAS 📧"):
                 with st.spinner("Processando Visitas..."):
                     res = enviar_relatorio_email("Geral")
-                    if res == "Sucesso": st.success("Enviado!")
+                    if res == "Sucesso": st.success("Enviado para o Max!")
                     elif res == "Vazio": st.warning("Sem dados.")
                     else: st.error(res)
 
-        # --- BOTÃO 2: RELATÓRIO DE GDM ---
         with col_B:
             st.info("❄️ **Relatório de GDM**")
-            st.caption("Puxa dados da aba Controle_GDM.")
             if st.button("Enviar Relatório GDM 📧"):
                 with st.spinner("Processando GDMs..."):
                     res = enviar_relatorio_email("GDM")
-                    if res == "Sucesso": st.success("Enviado!")
+                    if res == "Sucesso": st.success("Enviado para o Max!")
                     elif res == "Vazio": st.warning("Sem dados.")
                     else: st.error(res)
     
