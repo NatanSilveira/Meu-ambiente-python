@@ -16,14 +16,34 @@ import io
 # ==========================================
 st.set_page_config(page_title="Solar Force", page_icon="🔴", layout="centered")
 
-# --- CORREÇÃO DO MENU (PONTO 1) ---
-# Removemos a linha que escondia a 'stToolbar' para o menu voltar a aparecer no celular
+# --- CSS AVANÇADO: ESCONDE O ÍCONE DO GITHUB MAS MANTÉM O MENU ---
 hide_menu_style = """
     <style>
-    #MainMenu {visibility: visible;}
+    /* 1. Esconde a barra superior direita (onde fica o GitHub e o 'Manage App') */
+    [data-testid="stToolbar"] {
+        visibility: hidden;
+        height: 0%;
+        position: fixed;
+    }
+    
+    /* 2. Esconde o rodapé padrão */
     footer {visibility: hidden;}
-    /* Esconde apenas o botão de Deploy e opções de dev, mantendo a navegação */
-    .stDeployButton {display:none;}
+    
+    /* 3. Esconde o cabeçalho decorativo, mas PREPARA para salvar o botão do menu */
+    header {
+        visibility: hidden;
+    }
+    
+    /* 4. A MÁGICA: Força o botão do Menu Lateral (Hambúrguer) a ficar visível */
+    [data-testid="stSidebarNav"] {
+        display: block;
+        visibility: visible;
+    }
+    
+    /* Garante que o ícone de 3 listras apareça mesmo com o header oculto */
+    section[data-testid="stSidebar"] > div {
+        visibility: visible;
+    }
     </style>
     """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
