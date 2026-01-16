@@ -220,7 +220,7 @@ if menu == "Área do Promotor (Visitas)":
                     missoes_txt = ", ".join(missoes)
                     
                     # Salva na aba Principal (Sheet1)
-                    salvar_no_google([data_hora, nome, matricula, cod_loja, cidade, missoes_txt, obs, link_final], "Atividades_Semanais_Promotor")
+                    salvar_no_google([data_hora, nome, matricula, cod_loja, cidade, missoes_txt, obs, link_final], "Principal")
                     
                     st.success("✅ Visita registrada com sucesso!")
                 except Exception as e:
