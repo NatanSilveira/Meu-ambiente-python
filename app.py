@@ -12,12 +12,11 @@ from email import encoders
 import io
 
 # ==========================================
-# CONFIGURAÇÕES E CHAVES (PREENCHA AQUI!)
+# CONFIGURAÇÕES E CHAVES
 # ==========================================
-# configuração bizarra que gtp me passou! kk
 st.set_page_config(page_title="Solar Force", page_icon="🔴", layout="centered")
 
-# --- jeitinho com css para esconder ícones chatos
+# CSS para esconder menu e ícones
 hide_menu_style = """
     <style>
     #MainMenu {visibility: hidden;}
@@ -27,18 +26,14 @@ hide_menu_style = """
     </style>
     """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
-# -------------------------------------------------------
 
 # 1. Chave do site ImgBB
 IMGBB_API_KEY = "775d60bb1bcd4c621f61f0213e10ad7c"
 
-# 2. Configurações de E-mail
+# 2. Configurações de E-mail (Lendo do Cofre)
 try:
-    # Pega o email
     EMAIL_REMETENTE = st.secrets["email"]["usuario"]
     SENHA_EMAIL = st.secrets["email"]["senha"]
-    
-    # Pega o email do boss
     EMAIL_DESTINATARIO = st.secrets["admin"]["Destinatario"]
     SENHA_ADMIN = st.secrets["admin"]["admin"]
 except Exception as e:
@@ -62,7 +57,6 @@ st.markdown("""
     button[aria-label="Show password"] {
         display: none !important;
     }
-    /* Fontes */
     .stTextInput label, .stMultiSelect label, .stTextArea label, .stFileUploader label {
         font-size: 16px;
         font-weight: 600;
@@ -71,24 +65,25 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# FUNÇÕES DE BACK-END
+# FUNÇÕES DE BACK-END (CÉREBRO)
 # ==========================================
 
 def get_google_sheet(nome_da_aba):
-    """Conecta em uma aba específica da planilha"""
+    """Conecta na aba. Se não achar o nome, pega a primeira (segurança)."""
     scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets',
              "https://www.googleapis.com/auth/drive"]
-    # Lê as senhas direto do cofre do site (Secrets)
+    
     creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gcp_service_account"], scope)
     client = gspread.authorize(creds)
     
-    # Abre a planilha principal e seleciona a aba pelo nome
     planilha = client.open("Sistema Solar Force - Dados")
     
-    if nome_da_aba == "Principal":
-        return planilha.sheet1
-    else:
+    try:
+        # Tenta pegar a aba pelo nome exato (Ex: "Atividades_Semanais_Promotor")
         return planilha.worksheet(nome_da_aba)
+    except:
+        # Se der erro (nome errado), pega a primeira aba disponível para não travar
+        return planilha.sheet1
 
 def upload_imagem(arquivo):
     try:
@@ -101,16 +96,27 @@ def upload_imagem(arquivo):
         return f"[Erro: {e}]"
 
 def salvar_no_google(dados, nome_aba):
-    """Salva dados na aba especificada"""
+    """
+    Salva dados calculando a posição exata (FORÇA BRUTA)
+    Isso impede que ele salve por cima de linhas existentes.
+    """
     sheet = get_google_sheet(nome_aba)
-    sheet.append_row(dados)
+    
+    # 1. Pega tudo que tem na planilha
+    valores_existentes = sheet.get_all_values()
+    
+    # 2. A próxima linha é o total atual + 1
+    proxima_linha = len(valores_existentes) + 1
+    
+    # 3. Insere exatamente nessa linha 
+    sheet.insert_row(dados, index=proxima_linha)
 
 def enviar_relatorio_email(tipo_relatorio):
-    """Gera Excel e envia email baseado no tipo (Geral ou GDM)"""
+    """Gera Excel e envia email"""
     try:
-        # Define qual aba ler e qual assunto usar nessa porra
         if tipo_relatorio == "Geral":
-            sheet = get_google_sheet("Principal")
+            # Tenta pegar da aba certa, se falhar pega da primeira
+            sheet = get_google_sheet("Atividades_Semanais_Promotor")
             assunto = "Resumo Consolidado - VISITAS"
             nome_arquivo = "Relatorio_Visitas"
         elif tipo_relatorio == "GDM":
@@ -165,7 +171,6 @@ def enviar_relatorio_email(tipo_relatorio):
 # INTERFACE (FRONT-END)
 # ==========================================
 
-# Menu com 3 Opções
 menu = st.sidebar.selectbox("Navegação", [
     "Área do Promotor (Visitas)", 
     "Controle de GDM ❄️", 
@@ -219,10 +224,15 @@ if menu == "Área do Promotor (Visitas)":
                     data_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
                     missoes_txt = ", ".join(missoes)
                     
-                    # Salva na aba Principal (Sheet1)
-                    salvar_no_google([data_hora, nome, matricula, cod_loja, cidade, missoes_txt, obs, link_final], "Principal")
+                    # --- AQUI ESTÁ A CORREÇÃO DA ABA E DO SALVAMENTO ---
+                    # 1. Monta a lista
+                    nova_linha = [data_hora, nome, matricula, cod_loja, cidade, missoes_txt, obs, link_final]
+                    
+                    # 2. Manda salvar na aba certa com a função nova
+                    salvar_no_google(nova_linha, "Atividades_Semanais_Promotor")
                     
                     st.success("✅ Visita registrada com sucesso!")
+                    
                 except Exception as e:
                     st.error(f"Erro: {e}")
 
@@ -232,7 +242,6 @@ elif menu == "Controle de GDM ❄️":
     st.warning("Use esta área apenas para reportar divergências em Geladeiras.")
 
     with st.form(key="form_gdm"):
-        # Identificação Básica
         col1, col2 = st.columns(2)
         with col1:
             nome = st.text_input("Nome Promotor") 
@@ -242,8 +251,8 @@ elif menu == "Controle de GDM ❄️":
         st.markdown("### 🧊 Status das GDMs")
         st.caption("Insira os códigos patrimoniais separados por vírgula ou espaço.")
         
-        gdm_nao_pesq = st.text_area("GDMs Não Pesquisadas (Estão no PDV mas não no sistema)", height=80)
-        gdm_perdidas = st.text_area("GDMs Perdidas (Estão no sistema mas não no PDV)", height=80)
+        gdm_nao_pesq = st.text_area("GDMs Não Pesquisadas", height=80)
+        gdm_perdidas = st.text_area("GDMs Perdidas", height=80)
         gdm_paradas = st.text_area("GDMs Paradas/Quebradas", height=80)
         
         obs_gdm = st.text_input("Observação Geral")
@@ -260,7 +269,6 @@ elif menu == "Controle de GDM ❄️":
         else:
             with st.spinner('Registrando GDM...'):
                 try:
-                    # Upload Fotos GDM
                     lista_links = []
                     if fotos_gdm:
                         for arquivo in fotos_gdm:
@@ -271,11 +279,12 @@ elif menu == "Controle de GDM ❄️":
                         
                     data_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
                     
+                    # Salva na aba específica de GDM
                     salvar_no_google([data_hora, nome, cod_loja, gdm_nao_pesq, gdm_perdidas, gdm_paradas, obs_gdm, link_final_gdm], "Controle_GDM")
                     
                     st.success("✅ Ocorrência de GDM registrada!")
                 except Exception as e:
-                    st.error(f"Erro ao salvar: {e}. Verifique se a aba 'Controle_GDM' existe na planilha.")
+                    st.error(f"Erro ao salvar: {e}")
 
 # --- OPÇÃO 3: ADMINISTRAÇÃO ---
 elif menu == "Painel Administrativo":
@@ -292,7 +301,7 @@ elif menu == "Painel Administrativo":
         # --- BOTÃO 1: RELATÓRIO GERAL DE VISITAS ---
         with col_A:
             st.info("📋 **Relatório de Visitas**")
-            st.caption("Puxa dados da aba Principal.")
+            st.caption("Puxa dados da aba Atividades_Semanais_Promotor.")
             if st.button("Enviar Relatório VISITAS 📧"):
                 with st.spinner("Processando Visitas..."):
                     res = enviar_relatorio_email("Geral")
