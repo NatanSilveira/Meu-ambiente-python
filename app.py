@@ -16,34 +16,13 @@ import io
 # ==========================================
 st.set_page_config(page_title="Solar Force", page_icon="🔴", layout="centered")
 
-# --- CSS PARA ESCONDER APENAS O LADO DIREITO (GITHUB) ---
-hide_menu_style = """
+# --- CSS SIMPLES (O resto é com o config.toml) ---
+hide_style = """
     <style>
-    /* 1. Esconde a barra de ferramentas da direita (GitHub, 3 pontinhos) */
-    /* Usamos !important para garantir que o Streamlit não force a exibição */
-    [data-testid="stToolbar"] {
-        visibility: hidden !important;
-        display: none !important;
-    }
-
-    /* 2. Esconde a linha decorativa colorida no topo */
-    [data-testid="stDecoration"] {
-        visibility: hidden !important;
-    }
-
-    /* 3. Esconde o rodapé */
-    footer {
-        visibility: hidden !important;
-    }
-
-    /* 4. IMPORTANTE: Força o cabeçalho a aparecer */
-    /* O botão de menu (sanduíche) mora aqui, então isso precisa estar visível */
-    header {
-        visibility: visible !important;
-    }
+    footer {visibility: hidden;}
     </style>
     """
-st.markdown(hide_menu_style, unsafe_allow_html=True)
+st.markdown(hide_style, unsafe_allow_html=True)
 
 # 1. Chave do site ImgBB
 IMGBB_API_KEY = "775d60bb1bcd4c621f61f0213e10ad7c"
