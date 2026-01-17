@@ -16,26 +16,31 @@ import io
 # ==========================================
 st.set_page_config(page_title="Solar Force", page_icon="🔴", layout="centered")
 
-# --- TIRA O GITHUB SEM TIRAR A PESTE DO MENU ---
+# --- CSS PARA ESCONDER APENAS O LADO DIREITO (GITHUB) ---
 hide_menu_style = """
     <style>
-    /* 1. O TIRO CERTO: Esconde apenas a barra de ferramentas da direita (GitHub, etc) */
+    /* 1. Esconde a barra de ferramentas da direita (GitHub, 3 pontinhos) */
+    /* Usamos !important para garantir que o Streamlit não force a exibição */
     [data-testid="stToolbar"] {
-        visibility: hidden;
+        visibility: hidden !important;
+        display: none !important;
     }
 
-    /* 2. Esconde a linha colorida decorativa no topo (opcional, deixa mais limpo) */
+    /* 2. Esconde a linha decorativa colorida no topo */
     [data-testid="stDecoration"] {
-        display: none;
+        visibility: hidden !important;
     }
 
-    /* 3. Esconde o rodapé "Made with Streamlit" */
+    /* 3. Esconde o rodapé */
     footer {
-        visibility: hidden;
+        visibility: hidden !important;
     }
 
-    /* IMPORTANTE: NÃO escondemos o 'header' geral. 
-       Assim o botão de menu (que mora no header) continua lá firme e forte! */
+    /* 4. IMPORTANTE: Força o cabeçalho a aparecer */
+    /* O botão de menu (sanduíche) mora aqui, então isso precisa estar visível */
+    header {
+        visibility: visible !important;
+    }
     </style>
     """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
