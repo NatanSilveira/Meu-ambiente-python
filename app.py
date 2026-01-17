@@ -16,34 +16,26 @@ import io
 # ==========================================
 st.set_page_config(page_title="Solar Force", page_icon="🔴", layout="centered")
 
-# --- CSS AVANÇADO: ESCONDE O ÍCONE DO GITHUB MAS MANTÉM O MENU ---
+# --- TIRA O GITHUB SEM TIRAR A PESTE DO MENU ---
 hide_menu_style = """
     <style>
-    /* 1. Esconde a barra superior direita (onde fica o GitHub e o 'Manage App') */
+    /* 1. O TIRO CERTO: Esconde apenas a barra de ferramentas da direita (GitHub, etc) */
     [data-testid="stToolbar"] {
         visibility: hidden;
-        height: 0%;
-        position: fixed;
     }
-    
-    /* 2. Esconde o rodapé padrão */
-    footer {visibility: hidden;}
-    
-    /* 3. Esconde o cabeçalho decorativo, mas PREPARA para salvar o botão do menu */
-    header {
+
+    /* 2. Esconde a linha colorida decorativa no topo (opcional, deixa mais limpo) */
+    [data-testid="stDecoration"] {
+        display: none;
+    }
+
+    /* 3. Esconde o rodapé "Made with Streamlit" */
+    footer {
         visibility: hidden;
     }
-    
-    /* 4. A MÁGICA: Força o botão do Menu Lateral (Hambúrguer) a ficar visível */
-    [data-testid="stSidebarNav"] {
-        display: block;
-        visibility: visible;
-    }
-    
-    /* Garante que o ícone de 3 listras apareça mesmo com o header oculto */
-    section[data-testid="stSidebar"] > div {
-        visibility: visible;
-    }
+
+    /* IMPORTANTE: NÃO escondemos o 'header' geral. 
+       Assim o botão de menu (que mora no header) continua lá firme e forte! */
     </style>
     """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
