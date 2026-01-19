@@ -10,6 +10,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 import io
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 # ==========================================
 # CONFIGURAÇÕES INICIAIS
@@ -90,8 +91,9 @@ def salvar_no_google(dados, nome_aba):
     sheet.insert_row(dados, index=proxima_linha)
 
 def enviar_relatorio_email(tipo_relatorio):
-    """Gera Excel e envia email HTML formatado (PONTO 4)"""
+    """Gera Excel FORMATADO (Bonitão) e envia email HTML"""
     try:
+        # 1. Define qual aba pegar
         if tipo_relatorio == "Geral":
             sheet = get_google_sheet("Atividades_Semanais_Promotor")
             assunto = "Resumo Consolidado - VISITAS"
@@ -101,23 +103,79 @@ def enviar_relatorio_email(tipo_relatorio):
             assunto = "Resumo Consolidado - CONTROLE GDM"
             nome_arquivo = "Relatorio_GDM"
 
+        # 2. Pega os dados
         dados = sheet.get_all_records()
         df = pd.DataFrame(dados)
         
         if df.empty:
             return "Vazio"
 
+        # 3. Cria o Excel na memória usando Openpyxl para formatar
         buffer_excel = io.BytesIO()
+        
         with pd.ExcelWriter(buffer_excel, engine='openpyxl') as writer:
+            # Joga os dados crus
             df.to_excel(writer, index=False, sheet_name='Relatorio')
+            
+            # --- AQUI COMEÇA A MÁGICA DA FORMATAÇÃO ---
+            workbook = writer.book
+            worksheet = writer.sheets['Relatorio']
+            
+            # Cores da Solar (Vermelho Coca-Cola)
+            vermelho_solar = "F40009"
+            branco = "FFFFFF"
+            
+            # Estilos
+            fonte_cabecalho = Font(name='Calibri', size=11, bold=True, color=branco)
+            preenchimento_cabecalho = PatternFill(start_color=vermelho_solar, end_color=vermelho_solar, fill_type="solid")
+            alinhamento_centro = Alignment(horizontal='center', vertical='center')
+            borda_fina = Border(left=Side(style='thin'), right=Side(style='thin'), 
+                                top=Side(style='thin'), bottom=Side(style='thin'))
+            
+            # Configura o Cabeçalho (Linha 1)
+            for cell in worksheet[1]:
+                cell.font = fonte_cabecalho
+                cell.fill = preenchimento_cabecalho
+                cell.alignment = alinhamento_centro
+                cell.border = borda_fina
+            
+            # Adiciona Filtros Automáticos no cabeçalho
+            worksheet.auto_filter.ref = worksheet.dimensions
+            
+            # Ajusta largura das colunas e coloca bordas nos dados
+            for col in worksheet.columns:
+                max_length = 0
+                column = col[0].column_letter # Pega a letra da coluna (A, B, C...)
+                
+                # Descobre o tamanho ideal baseado no conteúdo
+                for cell in col:
+                    try:
+                        # Coloca borda em tudo
+                        cell.border = borda_fina
+                        cell.alignment = Alignment(vertical='center') # Centraliza verticalmente
+                        
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                
+                # Define a largura com uma folga (+2)
+                adjusted_width = (max_length + 2)
+                # Garante um mínimo de 15 e máximo de 50 pra não ficar gigante
+                if adjusted_width < 15: adjusted_width = 15
+                if adjusted_width > 60: adjusted_width = 60
+                    
+                worksheet.column_dimensions[column].width = adjusted_width
+
+        # 4. Finaliza o arquivo
         buffer_excel.seek(0)
 
+        # 5. Prepara o E-mail (Código igual ao anterior)
         msg = MIMEMultipart()
         msg['From'] = EMAIL_REMETENTE
         msg['To'] = EMAIL_DESTINATARIO
         msg['Subject'] = f"{assunto} - Solar Force ({datetime.now().strftime('%d/%m')})"
 
-        # --- CORPO DO EMAIL EM HTML COM LOGO ---
         html_body = f"""
         <html>
           <body>
